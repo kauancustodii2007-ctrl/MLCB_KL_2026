@@ -14,12 +14,23 @@ Mensagem: 'Gostaria de cancelar meu cartão de crédito' ==> Intenção Predita:
  
  
  
+ ---------------------- RESULTADOS DO LAB 02 ------------------------
+ 
+ 1- os resultados foram corretos 
+ --- RESULTADOS DO LAB 02 ---
+Mensagem de Teste: 'Gostaria de devolver o produto que comprei'
+Intenção Predita: troca_devolucao
+
+--- Distribuição de Probabilidades por Classe ---
+Classe [duvida_frete]: 27.99%
+Classe [rastrear_pedido]: 24.54%
+Classe [troca_devolucao]: 47.46%
  
  
- 
- 
- 
- 
+ 2- nao houve erro.
+
+
+ 3-a funçao Naive Bayes ele cria e treina um modelo de classificador em algoritimo Naive Bayes.
  
  
  
