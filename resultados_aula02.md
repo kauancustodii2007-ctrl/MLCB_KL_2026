@@ -33,14 +33,17 @@ Classe [troca_devolucao]: 47.46%
  3-a funçao Naive Bayes ele cria e treina um modelo de classificador em algoritimo Naive Bayes.
  
  
+ ----------------- RESULTADOS DO LAB 03 ----------------------------
  
  
+ 1- A acurácia obtida no conjunto de teste foi de **33.33%** (1 acerto em 3 exemplos de teste). Essa métrica é extremamente enganosa em conjuntos de dados muito pequenos por duas razões principais:
+ Alta Variância na Divisão: Com apenas 9 exemplos, o conjunto de teste possui apenas 3 amostras. Uma única previsão certa ou errada altera o resultado da acurácia em 33.33%.
  
+Amostras Não Representativas: É muito fácil que palavras essenciais vistas no treino simplesmente não apareçam no teste (ex: a palavra "impressora" aparecer no teste, mas não no treino), impedindo que o modelo generalize. 
  
- 
- 
- 
- 
+ 2- ele toma decisoes apenas por sim ou nao 
+
+ 3- ele pode gerar um erro por conta de ser uma arvore muito grande gera o risco de respostas sem preçisão
  
 [0] 0:bash*      "f561727aabec" 23:44 18-Aug-26
 
