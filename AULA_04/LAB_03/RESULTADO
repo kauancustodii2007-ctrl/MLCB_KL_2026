@@ -1,0 +1,44 @@
+CODIGO-01
+
+Relatório de Avaliação NLU - SAC Móveis Residenciais
+1. Avaliação dos Modelos
+
+O modelo KNN (K=3) apresentou 100% de acurácia e 100% de F1-Score nos dados de teste. A matriz de confusão também não apresentou erros, pois todas as 30 frases foram classificadas corretamente.
+
+A Decision Tree será comparada com esses resultados após sua execução.
+
+2. Análise dos Testes de Entrada
+
+No KNN foram realizados 10 testes. O modelo conseguiu classificar as frases, mas algumas frases que não tinham relação com móveis foram classificadas como vendas, logística ou reclamações. O fallback foi acionado uma vez, quando a confiança ficou abaixo de 50%.
+
+Na Decision Tree foram realizados 8 testes e seus resultados serão comparados com os do KNN.
+
+3. Veredito Final
+
+Até o momento, o KNN apresentou um ótimo resultado nos dados de teste, com 100% de acurácia e 100% de F1-Score.
+
+A escolha do melhor modelo será feita depois de analisar os resultados da Decision Tree e comparar o comportamento dos dois modelos nos testes digitados.
+
+CODIGO-02
+
+Relatório de Avaliação NLU - SAC Móveis Residenciais
+1. Comparação dos Modelos
+
+O KNN teve 100% de acurácia e 100% de F1-Score. A matriz de confusão não apresentou erros.
+
+A Decision Tree teve 80% de acurácia e 80% de F1-Score. Ela apresentou alguns erros, principalmente entre as classes de vendas, logística e reclamações.
+
+2. Testes de Entrada
+
+No KNN foram feitos 10 testes. Algumas frases fora do assunto de móveis foram classificadas como vendas, logística ou reclamações. O fallback foi acionado uma vez.
+
+Na Decision Tree foram feitos 8 testes. As frases sobre móveis foram classificadas corretamente, mas as frases fora do assunto também foram classificadas como alguma intenção. O fallback não foi acionado.
+
+3. Veredito Final
+
+O melhor modelo foi o KNN.
+
+Ele teve resultados melhores que a Decision Tree, com 100% de acurácia contra 80%. Além disso, o KNN conseguiu acionar o fallback em um dos testes, enquanto a Decision Tree não acionou nenhuma vez.
+
+
+3-O KNN foi o melhor modelo. Ele apresentou 100% de acurácia e F1-Score, enquanto a Decision Tree apresentou 80%. O KNN também teve uma matriz de confusão sem erros e conseguiu acionar o fallback em um dos testes. Por isso, o KNN apresentou o melhor resultado para o projeto.
