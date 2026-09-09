@@ -1,1 +1,1177 @@
+import re
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import nltk
+import spacy
+
+from nltk.corpus import stopwords
+from gensim.models import FastText
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix
+)
+
+# Baixar stopwords
+nltk.download("stopwords", quiet=True)
+
+# Stopwords em português
+stop_words_pt = set(stopwords.words("portuguese"))
+
+# Modelo linguístico do spaCy
+nlp = spacy.load("pt_core_news_sm")
+
+print("Ambiente preparado com sucesso.")
+
+
+def limpar_e_lemmatizar(texto):
+    """
+    Realiza o pré-processamento de uma mensagem do SAC.
+
+    Etapas:
+    1. Converte para minúsculas
+    2. Remove caracteres especiais e números
+    3. Processa o texto com spaCy
+    4. Remove stopwords
+    5. Realiza lemmatization
+    6. Remove tokens muito curtos
+    7. Retorna o texto normalizado
+    """
+
+    # 1. Converter para minúsculas
+    texto_limpo = texto.lower()
+
+    # 2. Remover pontuação, números e caracteres especiais
+    texto_limpo = re.sub(
+        r'[^a-záàâãéèêíïóôõöúçñ\s]',
+        '',
+        texto_limpo
+    )
+
+    # 3. Processar o texto com spaCy
+    doc = nlp(texto_limpo)
+
+    # 4. Extrair os lemas
+    tokens_filtrados = []
+
+    for token in doc:
+
+        # Ignorar espaços
+        if token.is_space:
+            continue
+
+        # Ignorar stopwords
+        if token.text in stop_words_pt:
+            continue
+
+        # Ignorar tokens muito pequenos
+        if len(token.text) <= 1:
+            continue
+
+        # Adicionar o lema
+        tokens_filtrados.append(token.lemma_)
+
+    # 5. Reconstruir a frase
+    return " ".join(tokens_filtrados)
+
+
+def analisar_preprocessamento(texto):
+    """
+    Apresenta um diagnóstico detalhado do pré-processamento.
+    """
+
+    # Texto em minúsculas
+    texto_minusculo = texto.lower()
+
+    # Remover pontuação, números e caracteres especiais
+    texto_limpo = re.sub(
+        r'[^a-záàâãéèêíïóôõöúçñ\s]',
+        '',
+        texto_minusculo
+    )
+
+    # Tokens antes da filtragem
+    doc = nlp(texto_limpo)
+
+    tokens_antes = [
+        token.text
+        for token in doc
+        if not token.is_space
+    ]
+
+    # Processamento dos tokens
+    tokens_finais = []
+    tokens_removidos = []
+
+    for token in doc:
+
+        if token.is_space:
+            continue
+
+        # Verifica se deve ser removido
+        if (
+            token.text in stop_words_pt
+            or len(token.text) <= 1
+        ):
+            tokens_removidos.append(token.text)
+            continue
+
+        # Adiciona o lema
+        tokens_finais.append(token.lemma_)
+
+    # Texto normalizado
+    texto_normalizado = " ".join(tokens_finais)
+
+    # Exibir diagnóstico
+    print("\n" + "=" * 50)
+    print("DIAGNÓSTICO DO PRÉ-PROCESSAMENTO")
+    print("=" * 50)
+
+    print("\nTexto original:")
+    print(texto)
+
+    print("\nTexto normalizado:")
+    print(texto_normalizado)
+
+    print("\nQuantidade de caracteres:")
+    print(len(texto))
+
+    print("\nQuantidade de tokens antes:")
+    print(len(tokens_antes))
+
+    print("\nQuantidade de tokens depois:")
+    print(len(tokens_finais))
+
+    print("\nTokens removidos:")
+    print(tokens_removidos)
+
+    print("\nTokens finais:")
+    print(tokens_finais)
+
+    print("=" * 50)
+
+
+# ---------------------------------------------------------
+# TESTE 1
+# ---------------------------------------------------------
+
+frase_teste = (
+    "Gostaria de saber se vocês estão DEVOLVENDO "
+    "os valores das mesas compradas!!!"
+)
+
+resultado = limpar_e_lemmatizar(frase_teste)
+
+print("\nFrase original:")
+print(frase_teste)
+
+print("\nFrase processada:")
+print(resultado)
+
+
+# ---------------------------------------------------------
+# TESTE 2 - FUNÇÃO DE DIAGNÓSTICO
+# ---------------------------------------------------------
+
+analisar_preprocessamento(
+    "MEU sofá!!! chegou quebrado e quero DEVOLVER!!!"
+)
+
+
+
+
+# ============================================================
+# EXERCÍCIO 2
+# FASTTEXT + MEAN POOLING
+# ============================================================
+
+# ============================================================
+# 1. INSTALAR/CONFIGURAR DEPENDÊNCIAS
+# ============================================================
+
+!python -m spacy download pt_core_news_sm
+
+
+# ============================================================
+# 2. IMPORTAR BIBLIOTECAS
+# ============================================================
+
+import re
+import numpy as np
+import pandas as pd
+import nltk
+import spacy
+
+from nltk.corpus import stopwords
+from gensim.models import FastText
+
+
+# ============================================================
+# 3. CONFIGURAR STOPWORDS E MODELO spaCy
+# ============================================================
+
+nltk.download("stopwords", quiet=True)
+
+stop_words_pt = set(
+    stopwords.words("portuguese")
+)
+
+nlp = spacy.load("pt_core_news_sm")
+
+print("Ambiente preparado com sucesso!")
+
+
+# ============================================================
+# 4. FUNÇÃO DO EXERCÍCIO 1
+# ============================================================
+
+def limpar_e_lemmatizar(texto):
+    """
+    Realiza o pré-processamento de uma mensagem.
+
+    Etapas:
+    1. Converte para minúsculas
+    2. Remove pontuação, números e caracteres especiais
+    3. Tokeniza usando spaCy
+    4. Remove stopwords
+    5. Realiza lemmatization
+    6. Remove tokens muito curtos
+    7. Retorna o texto normalizado
+    """
+
+    # Converter para minúsculas
+    texto_limpo = texto.lower()
+
+    # Remover pontuação, números e caracteres especiais
+    texto_limpo = re.sub(
+        r'[^a-záàâãéèêíïóôõöúçñ\s]',
+        '',
+        texto_limpo
+    )
+
+    # Processar com spaCy
+    doc = nlp(texto_limpo)
+
+    tokens_filtrados = []
+
+    for token in doc:
+
+        # Ignorar espaços
+        if token.is_space:
+            continue
+
+        # Ignorar stopwords
+        if token.text in stop_words_pt:
+            continue
+
+        # Ignorar tokens muito curtos
+        if len(token.text) <= 1:
+            continue
+
+        # Adicionar lema
+        tokens_filtrados.append(token.lemma_)
+
+    # Reconstruir frase
+    return " ".join(tokens_filtrados)
+
+
+# ============================================================
+# 5. TESTAR A FUNÇÃO DO EXERCÍCIO 1
+# ============================================================
+
+frase_teste = (
+    "Olá!!! EU gostaria de saber se vocês estão "
+    "DEVOLVENDO as mesas que foram compradas ontem."
+)
+
+resultado = limpar_e_lemmatizar(frase_teste)
+
+print("\nTexto original:")
+print(frase_teste)
+
+print("\nTexto processado:")
+print(resultado)
+
+
+# ============================================================
+# 6. FAZER UPLOAD DO DATASET
+# ============================================================
+
+from google.colab import files
+
+print("\nSelecione o arquivo sac_moveis_ac2.csv")
+
+arquivos = files.upload()
+
+
+# ============================================================
+# 7. CARREGAR O DATASET
+# ============================================================
+
+df = pd.read_csv("sac_moveis_ac2.csv")
+
+print("\n==========================================")
+print("DATASET")
+print("==========================================")
+
+print("Quantidade de registros:", len(df))
+
+print("\nColunas encontradas:")
+print(df.columns.tolist())
+
+print("\nPrimeiras linhas:")
+display(df.head())
+
+
+# ============================================================
+# 8. VERIFICAR A COLUNA "mensagem"
+# ============================================================
+
+if "mensagem" not in df.columns:
+    raise ValueError(
+        "A coluna 'mensagem' não foi encontrada no dataset."
+    )
+
+print("\nColuna 'mensagem' encontrada com sucesso!")
+
+
+# ============================================================
+# 9. APLICAR O PRÉ-PROCESSAMENTO
+# ============================================================
+
+df["texto_processado"] = (
+    df["mensagem"]
+    .astype(str)
+    .apply(limpar_e_lemmatizar)
+)
+
+print("\n==========================================")
+print("TEXTOS PROCESSADOS")
+print("==========================================")
+
+display(
+    df[["mensagem", "texto_processado"]].head(10)
+)
+
+
+# ============================================================
+# 10. TRANSFORMAR MENSAGENS EM TOKENS
+# ============================================================
+
+corpus_tokenizado = [
+    texto.split()
+    for texto in df["texto_processado"]
+]
+
+print("\n==========================================")
+print("CORPUS TOKENIZADO")
+print("==========================================")
+
+for i, tokens in enumerate(corpus_tokenizado[:5]):
+    print(f"Mensagem {i + 1}:")
+    print(tokens)
+    print()
+
+
+# ============================================================
+# 11. TREINAR O MODELO FASTTEXT
+# ============================================================
+
+modelo_fasttext = FastText(
+    sentences=corpus_tokenizado,
+    vector_size=50,
+    window=3,
+    min_count=1,
+    workers=4,
+    sg=1
+)
+
+print("==========================================")
+print("FASTTEXT")
+print("==========================================")
+
+print("Modelo FastText treinado com sucesso!")
+print("Dimensão dos vetores:", modelo_fasttext.vector_size)
+
+
+# ============================================================
+# 12. VERIFICAR UM VETOR DE PALAVRA
+# ============================================================
+
+# Encontrar uma palavra que exista no corpus
+palavra_teste = None
+
+for tokens in corpus_tokenizado:
+    if len(tokens) > 0:
+        palavra_teste = tokens[0]
+        break
+
+if palavra_teste is not None:
+
+    vetor_palavra = modelo_fasttext.wv[palavra_teste]
+
+    print("\nPalavra escolhida:")
+    print(palavra_teste)
+
+    print("\nVetor:")
+    print(vetor_palavra)
+
+    print("\nDimensão:")
+    print(vetor_palavra.shape)
+
+
+# ============================================================
+# 13. FUNÇÃO DE MEAN POOLING
+# ============================================================
+
+def obter_vetor_frase(frase, modelo):
+    """
+    Transforma uma frase em um vetor denso utilizando
+    FastText + Mean Pooling.
+    """
+
+    # Separar a frase em palavras
+    palavras = frase.split()
+
+    # Lista para armazenar os vetores
+    vetores = []
+
+    for palavra in palavras:
+
+        # TODO 1:
+        # Obter o vetor da palavra no FastText
+        vetor = modelo.wv[palavra]
+
+        # TODO 2:
+        # Adicionar o vetor à lista
+        vetores.append(vetor)
+
+    # TODO 3:
+    # Verificar se nenhum vetor foi encontrado
+    if len(vetores) == 0:
+        return np.zeros(modelo.vector_size)
+
+    # TODO 4:
+    # Calcular o Mean Pooling
+    vetor_medio = np.mean(vetores, axis=0)
+
+    return vetor_medio
+
+
+# ============================================================
+# 14. TESTAR O MEAN POOLING
+# ============================================================
+
+frase = "quero devolver meu sofá"
+
+vetor_frase = obter_vetor_frase(
+    frase,
+    modelo_fasttext
+)
+
+print("\n==========================================")
+print("MEAN POOLING")
+print("==========================================")
+
+print("Frase:")
+print(frase)
+
+print("\nVetor da frase:")
+print(vetor_frase)
+
+print("\nDimensão do vetor:")
+print(vetor_frase.shape)
+
+
+# ============================================================
+# 15. TRANSFORMAR TODO O DATASET EM VETORES
+# ============================================================
+
+X_vetores = np.array([
+    obter_vetor_frase(
+        texto,
+        modelo_fasttext
+    )
+    for texto in df["texto_processado"]
+])
+
+print("\n==========================================")
+print("REPRESENTAÇÃO SEMÂNTICA")
+print("==========================================")
+
+print("Formato de X_vetores:")
+print(X_vetores.shape)
+
+print("\nQuantidade de mensagens:")
+print(X_vetores.shape[0])
+
+print("\nDimensão de cada vetor:")
+print(X_vetores.shape[1])
+
+
+# ============================================================
+# 16. VISUALIZAR O PRIMEIRO VETOR
+# ============================================================
+
+print("\nPrimeiro vetor do dataset:")
+print(X_vetores[0])
+
+print("\nDimensão do primeiro vetor:")
+print(X_vetores[0].shape)
+
+
+# ============================================================
+# 17. RESUMO FINAL DO EXERCÍCIO 2
+# ============================================================
+
+print("\n")
+print("=" * 60)
+print("EXERCÍCIO 2 CONCLUÍDO")
+print("=" * 60)
+
+print("Dataset:", len(df), "mensagens")
+print("Corpus tokenizado:", len(corpus_tokenizado), "mensagens")
+print("FastText:", modelo_fasttext.vector_size, "dimensões")
+print("X_vetores:", X_vetores.shape)
+print("=" * 60)
+
+
+
+
+
+# ============================================================
+# EXERCÍCIO 3 — CLASSIFICADOR DE INTENÇÕES COM FALLBACK
+# ============================================================
+
+import os
+import numpy as np
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix
+)
+
+
+# ============================================================
+# 1. LOCALIZAR O DATASET
+# ============================================================
+
+arquivo = "sac_moveis_ac2_teste.csv"
+
+print("=" * 60)
+print("VERIFICANDO DATASET")
+print("=" * 60)
+
+print("Pasta atual:")
+print(os.getcwd())
+
+print("\nArquivos disponíveis:")
+print(os.listdir())
+
+
+if not os.path.exists(arquivo):
+    raise FileNotFoundError(
+        f"\nO arquivo '{arquivo}' não foi encontrado.\n"
+        "Verifique se ele está na mesma pasta do notebook."
+    )
+
+print("\nArquivo encontrado com sucesso!")
+
+
+# ============================================================
+# 2. CARREGAR O DATASET
+# ============================================================
+
+df = pd.read_csv(arquivo)
+
+print("\nDataset carregado!")
+print("Quantidade de registros:", len(df))
+
+print("\nColunas encontradas:")
+print(df.columns.tolist())
+
+print("\nPrimeiras linhas:")
+display(df.head())
+
+
+# ============================================================
+# 3. VERIFICAR AS COLUNAS NECESSÁRIAS
+# ============================================================
+
+if "mensagem" not in df.columns:
+    raise ValueError(
+        "A coluna 'mensagem' não foi encontrada."
+    )
+
+if "intencao" not in df.columns:
+    raise ValueError(
+        "A coluna 'intencao' não foi encontrada."
+    )
+
+
+# ============================================================
+# 4. PRÉ-PROCESSAR AS MENSAGENS
+# ============================================================
+
+df["texto_processado"] = (
+    df["mensagem"]
+    .astype(str)
+    .apply(limpar_e_lemmatizar)
+)
+
+print("\n==========================================")
+print("TEXTOS PROCESSADOS")
+print("==========================================")
+
+display(
+    df[["mensagem", "texto_processado"]].head(10)
+)
+
+
+# ============================================================
+# 5. CRIAR O CORPUS TOKENIZADO
+# ============================================================
+
+corpus_tokenizado = [
+    texto.split()
+    for texto in df["texto_processado"]
+]
+
+print("\n==========================================")
+print("CORPUS TOKENIZADO")
+print("==========================================")
+
+for tokens in corpus_tokenizado[:5]:
+    print(tokens)
+
+
+# ============================================================
+# 6. TREINAR O FASTTEXT
+# ============================================================
+
+from gensim.models import FastText
+
+modelo_fasttext = FastText(
+    sentences=corpus_tokenizado,
+    vector_size=50,
+    window=3,
+    min_count=1,
+    workers=4,
+    sg=1
+)
+
+print("\nFastText treinado com sucesso!")
+print("Dimensão dos vetores:", modelo_fasttext.vector_size)
+
+
+# ============================================================
+# 7. FUNÇÃO DE MEAN POOLING
+# ============================================================
+
+def obter_vetor_frase(frase, modelo):
+    """
+    Transforma uma frase em um vetor denso utilizando
+    FastText + Mean Pooling.
+    """
+
+    palavras = frase.split()
+
+    vetores = []
+
+    for palavra in palavras:
+
+        # Obter vetor da palavra
+        vetor = modelo.wv[palavra]
+
+        # Adicionar vetor à lista
+        vetores.append(vetor)
+
+    # Caso não exista nenhum vetor
+    if len(vetores) == 0:
+        return np.zeros(modelo.vector_size)
+
+    # Mean Pooling
+    vetor_medio = np.mean(
+        vetores,
+        axis=0
+    )
+
+    return vetor_medio
+
+
+# ============================================================
+# 8. TRANSFORMAR AS MENSAGENS EM VETORES
+# ============================================================
+
+X_vetores = np.array([
+    obter_vetor_frase(
+        texto,
+        modelo_fasttext
+    )
+    for texto in df["texto_processado"]
+])
+
+print("\n==========================================")
+print("VETORES GERADOS")
+print("==========================================")
+
+print("Formato de X_vetores:", X_vetores.shape)
+
+
+# ============================================================
+# 9. DEFINIR AS INTENÇÕES
+# ============================================================
+
+y = df["intencao"]
+
+print("\n==========================================")
+print("INTENÇÕES")
+print("==========================================")
+
+print(y.value_counts())
+
+
+# ============================================================
+# 10. SEPARAR TREINO E TESTE
+# ============================================================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_vetores,
+    y,
+    test_size=0.20,
+    random_state=42,
+    stratify=y
+)
+
+print("\n==========================================")
+print("DIVISÃO DOS DADOS")
+print("==========================================")
+
+print("Treinamento:", X_train.shape)
+print("Teste:", X_test.shape)
+
+
+# ============================================================
+# 11. TREINAR REGRESSÃO LOGÍSTICA
+# ============================================================
+
+modelo = LogisticRegression(
+    max_iter=1000
+)
+
+modelo.fit(
+    X_train,
+    y_train
+)
+
+print("\nRegressão Logística treinada com sucesso!")
+
+
+# ============================================================
+# 12. FAZER PREVISÕES
+# ============================================================
+
+y_pred = modelo.predict(X_test)
+
+
+# ============================================================
+# 13. AVALIAR O MODELO
+# ============================================================
+
+accuracy = accuracy_score(
+    y_test,
+    y_pred
+)
+
+print("\n==========================================")
+print("AVALIAÇÃO DO MODELO")
+print("==========================================")
+
+print(f"Accuracy: {accuracy:.2%}")
+
+print("\nClassification Report:")
+
+print(
+    classification_report(
+        y_test,
+        y_pred
+    )
+)
+
+
+# ============================================================
+# 14. MATRIZ DE CONFUSÃO
+# ============================================================
+
+print("\n==========================================")
+print("MATRIZ DE CONFUSÃO")
+print("==========================================")
+
+print(
+    confusion_matrix(
+        y_test,
+        y_pred
+    )
+)
+
+
+# ============================================================
+# 15. FUNÇÃO DE CLASSIFICAÇÃO COM FALLBACK
+# ============================================================
+
+def classificar_mensagem(
+    mensagem,
+    modelo,
+    modelo_embedding,
+    limiar=0.50
+):
+    """
+    Classifica uma mensagem e utiliza fallback
+    quando a confiança do modelo é menor que o limiar.
+    """
+
+    # 1. Pré-processar mensagem
+    texto_processado = limpar_e_lemmatizar(
+        mensagem
+    )
+
+    # 2. Transformar mensagem em vetor
+    vetor = obter_vetor_frase(
+        texto_processado,
+        modelo_embedding
+    )
+
+    # 3. Ajustar formato para o modelo
+    vetor = vetor.reshape(
+        1,
+        -1
+    )
+
+    # 4. Obter probabilidades
+    probabilidades = modelo.predict_proba(
+        vetor
+    )[0]
+
+    # 5. Encontrar a maior probabilidade
+    indice = np.argmax(
+        probabilidades
+    )
+
+    intencao = modelo.classes_[indice]
+
+    confianca = probabilidades[indice]
+
+    # 6. Aplicar fallback
+    if confianca >= limiar:
+        resultado = intencao
+    else:
+        resultado = "FALLBACK_HUMANO"
+
+    return resultado, confianca
+
+
+# ============================================================
+# 16. TESTES SOLICITADOS
+# ============================================================
+
+testes = [
+    "quero devolver meu sofá",
+    "como faço para realizar a devolução?",
+    "cadê meu pedido?",
+    "meu pedido nao chego",
+    "qual é a previsão do tempo?"
+]
+
+
+# ============================================================
+# 17. EXECUTAR OS TESTES
+# ============================================================
+
+print("\n")
+print("=" * 70)
+print("TESTES DO CHATBOT")
+print("=" * 70)
+
+for mensagem in testes:
+
+    resultado, confianca = classificar_mensagem(
+        mensagem,
+        modelo,
+        modelo_fasttext,
+        limiar=0.50
+    )
+
+    print("\nMensagem:")
+    print(mensagem)
+
+    print("\nIntenção/Decisão:")
+    print(resultado)
+
+    print(
+        f"Confiança: {confianca:.2%}"
+    )
+
+    if resultado == "FALLBACK_HUMANO":
+        print(
+            "→ Encaminhar para atendimento humano."
+        )
+    else:
+        print(
+            "→ Resposta automática."
+        )
+
+
+
+
+# ============================================================
+# EXERCÍCIO 4
+# LABORATÓRIO COMPARATIVO:
+# REGRESSÃO LOGÍSTICA × KNN
+# ============================================================
+
+import pandas as pd
+import numpy as np
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score
+)
+
+
+# ============================================================
+# 1. VERIFICAR OS DADOS
+# ============================================================
+
+print("=" * 60)
+print("VERIFICAÇÃO DOS DADOS")
+print("=" * 60)
+
+print("X_train:", X_train.shape)
+print("X_test:", X_test.shape)
+
+print("y_train:", y_train.shape)
+print("y_test:", y_test.shape)
+
+
+# ============================================================
+# 2. DEFINIR OS VETORES DE TREINAMENTO E TESTE
+# ============================================================
+
+X_train_vec = X_train
+X_test_vec = X_test
+
+
+# ============================================================
+# 3. CRIAR OS MODELOS
+# ============================================================
+
+modelo_logistico = LogisticRegression(
+    max_iter=1000
+)
+
+modelo_knn = KNeighborsClassifier(
+    n_neighbors=3
+)
+
+
+# ============================================================
+# 4. TREINAR REGRESSÃO LOGÍSTICA
+# ============================================================
+
+modelo_logistico.fit(
+    X_train_vec,
+    y_train
+)
+
+print("\nRegressão Logística treinada!")
+
+
+# ============================================================
+# 5. TREINAR KNN
+# ============================================================
+
+modelo_knn.fit(
+    X_train_vec,
+    y_train
+)
+
+print("KNN treinado!")
+
+
+# ============================================================
+# 6. FAZER PREVISÕES
+# ============================================================
+
+# IMPORTANTE:
+# As previsões são feitas somente com X_test_vec.
+
+y_pred_logistico = modelo_logistico.predict(
+    X_test_vec
+)
+
+y_pred_knn = modelo_knn.predict(
+    X_test_vec
+)
+
+
+# ============================================================
+# 7. AVALIAR REGRESSÃO LOGÍSTICA
+# ============================================================
+
+accuracy_logistico = accuracy_score(
+    y_test,
+    y_pred_logistico
+)
+
+precision_logistico = precision_score(
+    y_test,
+    y_pred_logistico,
+    average="weighted",
+    zero_division=0
+)
+
+recall_logistico = recall_score(
+    y_test,
+    y_pred_logistico,
+    average="weighted",
+    zero_division=0
+)
+
+f1_logistico = f1_score(
+    y_test,
+    y_pred_logistico,
+    average="weighted",
+    zero_division=0
+)
+
+
+# ============================================================
+# 8. AVALIAR KNN
+# ============================================================
+
+accuracy_knn = accuracy_score(
+    y_test,
+    y_pred_knn
+)
+
+precision_knn = precision_score(
+    y_test,
+    y_pred_knn,
+    average="weighted",
+    zero_division=0
+)
+
+recall_knn = recall_score(
+    y_test,
+    y_pred_knn,
+    average="weighted",
+    zero_division=0
+)
+
+f1_knn = f1_score(
+    y_test,
+    y_pred_knn,
+    average="weighted",
+    zero_division=0
+)
+
+
+# ============================================================
+# 9. CRIAR TABELA COMPARATIVA
+# ============================================================
+
+resultados = pd.DataFrame({
+
+    "Modelo": [
+        "Regressão Logística",
+        "KNN"
+    ],
+
+    "Accuracy": [
+        accuracy_logistico,
+        accuracy_knn
+    ],
+
+    "Precision": [
+        precision_logistico,
+        precision_knn
+    ],
+
+    "Recall": [
+        recall_logistico,
+        recall_knn
+    ],
+
+    "F1": [
+        f1_logistico,
+        f1_knn
+    ]
+})
+
+
+# ============================================================
+# 10. FORMATAR OS RESULTADOS EM PORCENTAGEM
+# ============================================================
+
+resultados_formatados = resultados.copy()
+
+for coluna in [
+    "Accuracy",
+    "Precision",
+    "Recall",
+    "F1"
+]:
+
+    resultados_formatados[coluna] = (
+        resultados_formatados[coluna] * 100
+    ).round(2).astype(str) + "%"
+
+
+# ============================================================
+# 11. EXIBIR RESULTADO
+# ============================================================
+
+print("\n")
+print("=" * 70)
+print("COMPARAÇÃO DOS MODELOS")
+print("=" * 70)
+
+display(resultados_formatados)
+
+
+
+-------------- EXERCÍCIOS -------------
+
+1 - A Regressão Logística teve o melhor desempenho, superando o KNN em Accuracy, Precision, Recall e F1-Score.
+
+2 - Mesmo usando os mesmos embeddings, os modelos trabalham de formas diferentes. A Regressão Logística aprende com os dados de treinamento e tenta encontrar uma separação entre as diferentes intenções.
+
+Já o KNN compara uma nova mensagem com as mensagens que já estão no conjunto de treinamento e verifica quais são as mais próximas.
+
+Por isso, mesmo recebendo os mesmos vetores do FastText, os dois modelos podem chegar a resultados diferentes.
+
+
+3 - A qualidade dos embeddings é essencial para o KNN, pois ele usa a distância entre vetores para identificar mensagens semelhantes. Embeddings bem representados melhoram a classificação, enquanto embeddings ruins podem aproximar mensagens de intenções diferentes e causar erros.
+
+
+4 - A Regressão Logística seria mais adequada, pois é mais rápida e eficiente para classificar grandes volumes de dados do que o KNN.
+
+
+5 - Eu escolheria a Regressão Logística, pois teve melhor desempenho, é adequada para crescer e permite usar a confiança da previsão para decidir entre resposta automática ou atendimento humano.
+
+
+
 
