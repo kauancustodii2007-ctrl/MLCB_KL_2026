@@ -1,0 +1,12 @@
+resultados aula-06
+
+Classificador de Intenções Imobiliárias
+mensagem
+Quero comprar um apartamento de 3 quartos com varanda
+Clear                                          Submit
+output
+
+Intenção detectada: comprar_imovel
+                Flag
+
+
